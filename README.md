@@ -1,55 +1,71 @@
-# TP4 - Sockets UDP en mode non connecte
+# TP5 - Service de banque avec Java RMI et JNDI
 
-## Etape 1 : Preparation de l'espace de travail
+Application répartie individuelle réalisée pour l'activité 5-2. Le serveur
+central gère des comptes bancaires et expose deux méthodes distantes :
 
-Le projet est organise dans le repertoire suivant :
+- `creerCompte(Compte c)` : crée un compte si son code n'existe pas ;
+- `getInfoCompte(int code)` : retourne les informations d'un compte.
 
+## Structure
+
+```text
+src/
+├── metier/Compte.java
+├── rmiService/IBanque.java
+├── rmiService/BanqueImpl.java
+├── rmiServer/BanqueServer.java
+├── rmiClient/BanqueClient.java
+└── jndi.properties
 ```
-.votreNomPrenom_LSI3_DevAppReparties/
-├── README.md
-├── src/
-│   ├── clientPackage/
-│   │   └── Client.java
-│   └── serverPackage/
-│       └── Server.java
-└── out/
-```
 
-## Etape 2 : Chat unidirectionnel avec un seul client
+`Compte` est sérialisable. Le serveur utilise un registre RMI local et publie
+le service avec `InitialContext`. Le client effectue sa recherche avec JNDI,
+sans utiliser `Naming.lookup()`.
 
-### Objectif
-Le serveur ecoute sur le port 1234 et reçoit des datagrammes UDP envoyés par un client. Le client lit un nom d'utilisateur et un message texte, puis envoie le message au serveur sous forme de paquet UDP.
+## Compilation
 
-### Fonctionnement
-- Le serveur écoute sur le port 1234 via `DatagramSocket` et `InetSocketAddress`.
-- Le client demande le nom d'utilisateur.
-- Le client envoie un message au format : `[NomUtilisateur] : texte`.
-- Le serveur affiche l'adresse IP et le port de l'expéditeur ainsi que le contenu du message.
-
-### Compilation
+Depuis le dossier du projet :
 
 ```powershell
-javac -d out src\serverPackage\Server.java src\clientPackage\Client.java
+Remove-Item -Recurse -Force out -ErrorAction SilentlyContinue
+New-Item -ItemType Directory out | Out-Null
+javac -d out src\metier\Compte.java src\rmiService\IBanque.java src\rmiService\BanqueImpl.java src\rmiServer\BanqueServer.java
+jar cf banqueClient.jar -C out metier\Compte.class -C out rmiService\IBanque.class
+javac -cp banqueClient.jar -d out src\rmiClient\BanqueClient.java
+Copy-Item src\jndi.properties out\jndi.properties
 ```
 
-### Execution
+Le fichier `banqueClient.jar` contient uniquement `Compte` et `IBanque`, comme
+demandé dans l'énoncé. La classe `BanqueImpl` reste uniquement côté serveur.
+
+## Exécution
 
 Terminal 1 :
 
 ```powershell
-java -cp out serverPackage.Server
+java -cp out rmiServer.BanqueServer
 ```
 
 Terminal 2 :
 
 ```powershell
-java -cp out clientPackage.Client
+java -cp "out;banqueClient.jar" rmiClient.BanqueClient
 ```
 
-Le client peut ensuite saisir un nom d'utilisateur et des messages pour les envoyer au serveur.
+Résultat attendu :
 
-## Etape 3 : Chat bidirectionnel avec plusieurs clients
+```text
+Compte cree avec succes : Compte{code=1001, solde=1500.00, ...}
+Echec : le code 1001 existe deja.
+Compte{code=1001, solde=1500.00, ...}
+Aucun compte ne correspond au code 9999.
+```
 
-Le serveur garde les adresses des clients qui ont envoyé un message. Quand un message arrive, il l'envoie à tous les autres clients.
+## Captures d'écran
 
-Le client utilise un thread pour recevoir les messages pendant que le programme principal lit les messages à envoyer. Pour tester cette étape, lancez le serveur puis plusieurs clients dans des terminaux différents.
+Ajouter ici les captures du projet, de la compilation, du serveur, du client,
+et de la vérification de la communication RMI avec JNDI avant le dépôt.
+
+## Dépôt
+
+Le lien de ce repository doit être remis sur l'espace ENT.
