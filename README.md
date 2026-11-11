@@ -60,6 +60,3 @@ Echec : le code 1001 existe deja.
 Compte{code=1001, solde=1500.00, ...}
 Aucun compte ne correspond au code 9999.
 ```
-## Dépôt
-
-Le lien de ce repository doit être remis sur l'espace ENT.
